@@ -1,27 +1,47 @@
 from __future__ import absolute_import, division, print_function
 import tensorflow as tf
 from models.resnet import resnet_18, resnet_34, resnet_50, resnet_101, resnet_152
-import config
 from prepare_data import generate_datasets
 import math
 
+import os, sys
+import argparse
 
-def get_model():
-    model = resnet_50()
-    if config.model == "resnet18":
+def get_model(model_name, image_width, image_height, channels):
+    if model_name == "resnet18":
         model = resnet_18()
-    if config.model == "resnet34":
+    elif model_name == "resnet34":
         model = resnet_34()
-    if config.model == "resnet101":
+    elif model_name == "resnet50":
+        model = resnet_50()
+    elif model_name == "resnet101":
         model = resnet_101()
-    if config.model == "resnet152":
+    elif model_name == "resnet152":
         model = resnet_152()
-    model.build(input_shape=(None, config.image_height, config.image_width, config.channels))
+    else:
+        return None
+
+    model.build(input_shape=(None, image_height, image_width, channels))
     model.summary()
     return model
 
+def get_argparser():
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('-E', '--epoch', type=int, required=True)
+    parser.add_argument('-B', '--batch-size', type=int, default=8)
+    parser.add_argument('--width', type=int, default=224, help='image width')
+    parser.add_argument('--height', type=int, default=128, help='image height')
+    parser.add_argument('--model', type=str, default='resnet50', help='resnet model name')
+    parser.add_argument('--savemodel-dir', type=str, required=True, help='directory to save model')
+
+    return parser
 
 if __name__ == '__main__':
+
+    # Argument parsing
+    parser = get_argparser()
+    args = parser.parse_args()
+
     # GPU settings
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
@@ -34,7 +54,11 @@ if __name__ == '__main__':
 
 
     # create model
-    model = get_model()
+    model = get_model(args.model, args.width, args.height, channels=3)
+    if model is None:
+        print(f'--model parameter is wrong: {args.model}')
+        sys.exit(0)
+
 
     # define loss and optimizer
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
@@ -66,7 +90,7 @@ if __name__ == '__main__':
         valid_accuracy(labels, predictions)
 
     # start training
-    for epoch in range(config.EPOCHS):
+    for epoch in range(args.epoch):
         train_loss.reset_states()
         train_accuracy.reset_states()
         valid_loss.reset_states()
@@ -76,9 +100,9 @@ if __name__ == '__main__':
             step += 1
             train_step(images, labels)
             print("Epoch: {}/{}, step: {}/{}, loss: {:.5f}, accuracy: {:.5f}".format(epoch + 1,
-                                                                                     config.EPOCHS,
+                                                                                     args.epoch,
                                                                                      step,
-                                                                                     math.ceil(train_count / config.BATCH_SIZE),
+                                                                                     math.ceil(train_count / args.batch_size),
                                                                                      train_loss.result(),
                                                                                      train_accuracy.result()))
 
@@ -87,10 +111,11 @@ if __name__ == '__main__':
 
         print("Epoch: {}/{}, train loss: {:.5f}, train accuracy: {:.5f}, "
               "valid loss: {:.5f}, valid accuracy: {:.5f}".format(epoch + 1,
-                                                                  config.EPOCHS,
+                                                                  args.epoch,
                                                                   train_loss.result(),
                                                                   train_accuracy.result(),
                                                                   valid_loss.result(),
                                                                   valid_accuracy.result()))
 
-    model.save_weights(filepath=config.save_model_dir, save_format='tf')
+    savemodel_filepath = os.path.join(args.savemodel_dir, 'model')
+    model.save_weights(filepath=args.savemodel_dir, save_format='tf')
