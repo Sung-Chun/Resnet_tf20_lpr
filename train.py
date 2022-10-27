@@ -117,5 +117,15 @@ if __name__ == '__main__':
                                                                   valid_loss.result(),
                                                                   valid_accuracy.result()))
 
-    savemodel_filepath = os.path.join(args.savemodel_dir, 'model')
-    model.save_weights(filepath=args.savemodel_dir, save_format='tf')
+        if (epoch % 1000) == 999:
+            savemodel_filepath = os.path.join(args.savemodel_dir, f'{str(epoch + 1)}')
+            os.makedirs(savemodel_filepath, exist_ok=True)
+            savemodel_file = os.path.join(savemodel_filepath, 'model')
+            model.save_weights(filepath=savemodel_file, save_format='tf')
+            print(savemodel_filepath)
+
+    savemodel_filepath = os.path.join(args.savemodel_dir, 'final')
+    os.makedirs(savemodel_filepath, exist_ok=True)
+    savemodel_file = os.path.join(savemodel_filepath, 'model')
+    model.save_weights(filepath=savemodel_file, save_format='tf')
+    print(savemodel_filepath)
