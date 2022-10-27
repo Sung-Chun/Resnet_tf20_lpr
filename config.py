@@ -1,9 +1,9 @@
 # some training parameters
-EPOCHS = 50
+EPOCHS = 1000
 BATCH_SIZE = 8
-NUM_CLASSES = 5
-image_height = 224
+NUM_CLASSES = 11
 image_width = 224
+image_height = 128
 channels = 3
 save_model_dir = "saved_model/model"
 dataset_dir = "dataset/"
