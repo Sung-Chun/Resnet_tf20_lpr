@@ -44,6 +44,9 @@ if __name__ == '__main__':
     @tf.function
     def test_step(images, labels):
         predictions = model(images, training=False)
+
+        # 여기에 labels와 실제 predictions의 결과를 화면에 보여준다...
+
         t_loss = loss_object(labels, predictions)
 
         test_loss(t_loss)
