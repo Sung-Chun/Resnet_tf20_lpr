@@ -30,7 +30,7 @@ def get_images_and_labels(data_root_dir):
     return all_image_path, all_image_label
 
 
-def get_dataset(dataset_root_dir):
+def get_dataset(dataset_root_dir, img_width, img_height):
     all_image_path, all_image_label = get_images_and_labels(data_root_dir=dataset_root_dir)
     # print("image_path: {}".format(all_image_path[:]))
     # print("image_label: {}".format(all_image_label[:]))
@@ -43,15 +43,15 @@ def get_dataset(dataset_root_dir):
     return dataset, image_count
 
 
-def generate_datasets():
-    train_dataset, train_count = get_dataset(dataset_root_dir=config.train_dir)
-    valid_dataset, valid_count = get_dataset(dataset_root_dir=config.valid_dir)
-    test_dataset, test_count = get_dataset(dataset_root_dir=config.test_dir)
+def generate_datasets(batch_size, img_width, img_height):
+    train_dataset, train_count = get_dataset(dataset_root_dir=config.train_dir, img_width, img_height)
+    valid_dataset, valid_count = get_dataset(dataset_root_dir=config.valid_dir, img_width, img_height)
+    test_dataset, test_count = get_dataset(dataset_root_dir=config.test_dir, img_width, img_height)
 
 
     # read the original_dataset in the form of batch
-    train_dataset = train_dataset.shuffle(buffer_size=train_count).batch(batch_size=config.BATCH_SIZE)
-    valid_dataset = valid_dataset.batch(batch_size=config.BATCH_SIZE)
-    test_dataset = test_dataset.batch(batch_size=config.BATCH_SIZE)
+    train_dataset = train_dataset.shuffle(buffer_size=train_count).batch(batch_size)
+    valid_dataset = valid_dataset.batch(batch_size)
+    test_dataset = test_dataset.batch(batch_size)
 
     return train_dataset, valid_dataset, test_dataset, train_count, valid_count, test_count

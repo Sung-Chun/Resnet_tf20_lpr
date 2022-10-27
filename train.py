@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
 
     # get the original_dataset
-    train_dataset, valid_dataset, test_dataset, train_count, valid_count, test_count = generate_datasets()
+    train_dataset, valid_dataset, test_dataset, train_count, valid_count, test_count = generate_datasets(args.batch_size, args.width, args.height)
 
 
     # create model

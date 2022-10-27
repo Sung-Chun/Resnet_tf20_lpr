@@ -3,7 +3,24 @@ import config
 from prepare_data import generate_datasets
 from train import get_model
 
+import os, sys
+import argparse
+
+def get_argparser():
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('-B', '--batch-size', type=int, default=8)
+    parser.add_argument('--width', type=int, default=224, help='image width')
+    parser.add_argument('--height', type=int, default=128, help='image height')
+    parser.add_argument('--model', type=str, default='resnet50', help='resnet model name')
+    parser.add_argument('--savemodel-dir', type=str, required=True, help='directory to save model')
+
+    return parser
+
 if __name__ == '__main__':
+
+    # Argument parsing
+    parser = get_argparser()
+    args = parser.parse_args()
 
     # GPU settings
     gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -12,11 +29,12 @@ if __name__ == '__main__':
             tf.config.experimental.set_memory_growth(gpu, True)
 
     # get the original_dataset
-    train_dataset, valid_dataset, test_dataset, train_count, valid_count, test_count = generate_datasets()
+    train_dataset, valid_dataset, test_dataset, train_count, valid_count, test_count = generate_datasets(args.batch_size, args.width, args.height)
     # print(train_dataset)
     # load the model
-    model = get_model()
-    model.load_weights(filepath=config.save_model_dir)
+    model = get_model(args.model, args.width, args.height, channels=3)
+    savemodel_filepath = os.path.join(args.savemodel_dir, 'final', 'model')
+    model.load_weights(filepath=savemodel_filepath)
 
     # Get the accuracy on the test set
     loss_object = tf.keras.metrics.SparseCategoricalCrossentropy()
