@@ -34,6 +34,9 @@ def get_argparser():
     parser.add_argument('--model', type=str, default='resnet50', help='resnet model name')
     parser.add_argument('--savemodel-dir', type=str, required=True, help='directory to save model')
 
+    parser.add_argument('--partition-name', type=str, required=False)
+    parser.add_argument('--resource-orientation', type=str, required=False)
+
     return parser
 
 if __name__ == '__main__':
