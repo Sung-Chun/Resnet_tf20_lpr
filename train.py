@@ -5,6 +5,7 @@ from prepare_data import generate_datasets
 import math
 
 import os, sys
+import time, datetime
 import argparse
 
 def get_model(model_name, image_width, image_height, channels):
@@ -55,6 +56,8 @@ if __name__ == '__main__':
     # get the original_dataset
     train_dataset, valid_dataset, test_dataset, train_count, valid_count, test_count = generate_datasets(args.batch_size, args.width, args.height)
 
+    # start time (checking time to take for training)
+    start_t = time.time()
 
     # create model
     model = get_model(args.model, args.width, args.height, channels=3)
@@ -127,8 +130,18 @@ if __name__ == '__main__':
             model.save_weights(filepath=savemodel_file, save_format='tf')
             print(savemodel_filepath)
 
+            # Elapsed time
+            end_t = time.time()
+            print(f'[Elapsed Time till epoch({str(epoch + 1)}): {str(end_t - start_t)}]', flush=True)
+
+
     savemodel_filepath = os.path.join(args.savemodel_dir, 'final')
     os.makedirs(savemodel_filepath, exist_ok=True)
     savemodel_file = os.path.join(savemodel_filepath, 'model')
     model.save_weights(filepath=savemodel_file, save_format='tf')
     print(savemodel_filepath)
+
+    # end time
+    end_t = time.time()
+    print(f'[Elapsed Time in Total: {str(end_t - start_t)}]', flush=True)
+    print(datetime.datetime.now())
