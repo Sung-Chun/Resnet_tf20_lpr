@@ -24,6 +24,10 @@ def get_images_and_labels(data_root_dir):
     label_names = sorted(item.name for item in data_root.glob('*/'))
     # dict: {label : index}
     label_to_index = dict((label, index) for index, label in enumerate(label_names))
+    print('---------------------------------')
+    print('  Label-to-index:')
+    print(label_to_index)
+    print('---------------------------------')
     # get all images' labels
     all_image_label = [label_to_index[pathlib.Path(single_image_path).parent.name] for single_image_path in all_image_path]
 
@@ -40,13 +44,13 @@ def get_dataset(dataset_root_dir, img_width, img_height):
     dataset = tf.data.Dataset.zip((image_dataset, label_dataset))
     image_count = len(all_image_path)
 
-    return dataset, image_count
+    return dataset, image_count, all_image_path, all_image_label
 
 
 def generate_datasets(batch_size, img_width, img_height):
-    train_dataset, train_count = get_dataset(config.train_dir, img_width, img_height)
-    valid_dataset, valid_count = get_dataset(config.valid_dir, img_width, img_height)
-    test_dataset, test_count = get_dataset(config.test_dir, img_width, img_height)
+    train_dataset, train_count, _, _ = get_dataset(config.train_dir, img_width, img_height)
+    valid_dataset, valid_count, _, _ = get_dataset(config.valid_dir, img_width, img_height)
+    test_dataset, test_count, _, _ = get_dataset(config.test_dir, img_width, img_height)
 
 
     # read the original_dataset in the form of batch
@@ -55,3 +59,11 @@ def generate_datasets(batch_size, img_width, img_height):
     test_dataset = test_dataset.batch(batch_size)
 
     return train_dataset, valid_dataset, test_dataset, train_count, valid_count, test_count
+
+def generate_test_datasets(batch_size, img_width, img_height):
+    test_dataset, test_count, all_image_path, all_image_label= get_dataset(config.test_dir, img_width, img_height)
+
+    # read the original_dataset in the form of batch
+    test_dataset = test_dataset.batch(1)
+
+    return test_dataset, test_count, all_image_path, all_image_label
