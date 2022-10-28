@@ -44,9 +44,9 @@ def get_dataset(dataset_root_dir, img_width, img_height):
 
 
 def generate_datasets(batch_size, img_width, img_height):
-    train_dataset, train_count = get_dataset(dataset_root_dir=config.train_dir, img_width, img_height)
-    valid_dataset, valid_count = get_dataset(dataset_root_dir=config.valid_dir, img_width, img_height)
-    test_dataset, test_count = get_dataset(dataset_root_dir=config.test_dir, img_width, img_height)
+    train_dataset, train_count = get_dataset(config.train_dir, img_width, img_height)
+    valid_dataset, valid_count = get_dataset(config.valid_dir, img_width, img_height)
+    test_dataset, test_count = get_dataset(config.test_dir, img_width, img_height)
 
 
     # read the original_dataset in the form of batch
