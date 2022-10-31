@@ -11,34 +11,37 @@ def imread_hangul_filename(filename):
     return cv2.imdecode(np_arr, cv2.IMREAD_UNCHANGED)
 
 
-hough_threshold_list = [200, 250, 300]
+hough_threshold_list = [120, 200, 250, 300]
 
-def detect_lines(img_filename, th1, th2, show_canny=False):
-    img = imread_hangul_filename(img_filename)
-    src = cv2.fastNlMeansDenoisingColored(img, None, 10, 10, 7, 21)
-    dst = src.copy()
-    gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
 
-    #canny = cv2.Canny(gray, 5000, 1500, apertureSize = 5, L2gradient = True)
-    #lines = cv2.HoughLines(canny, 0.8, np.pi / 180, 150, srn = 100, stn = 200, min_theta = 0, max_theta = np.pi)
-
-    # Canny edge detection
-    canny = cv2.Canny(gray, th1, th2)
-    if show_canny:
-        cv2.imshow("canny", canny)
+def lines_by_hough(canny, scale, line_type):
 
     # Hough line transform
     hough_done = False
+
+    if line_type == 0:
+        # 수평선 (90도 근처로..)
+        min_theta = np.pi * 60. / 180.0
+        max_theta = np.pi * 120. / 180.0
+    elif line_type == 1:
+        # 수직선 (오른쪽으로 살짝 기울어진..)
+        min_theta = np.pi * 0. / 180.0
+        max_theta = np.pi * 30. / 180.0
+    else:
+        # 수직선 (왼쪽으로 살짝 기울어진..)
+        min_theta = np.pi * 150. / 180.0
+        max_theta = np.pi
+
     for hough_th in hough_threshold_list:
-        lines = cv2.HoughLines(canny, 1, np.pi / 180, hough_th, None, 0, 0)
+        lines = cv2.HoughLines(canny, 1, np.pi / 180, hough_th, min_theta=min_theta, max_theta=max_theta)
+
         if lines is None:
             continue
-        print(f'  ## [{img_filename}] Num of lines: ({len(lines)})')
         if len(lines) < 4:
-            lines = cv2.HoughLines(canny, 1, np.pi / 180, 100, None, 0, 0)
+            lines = cv2.HoughLines(canny, 1, np.pi / 180, 90, min_theta=min_theta, max_theta=max_theta)
             if lines is None:
                 continue
-            print(f'  ## [{img_filename}] Num of lines: ({len(lines)})')
+            print(f'  ## Num of lines: ({len(lines)})')
 
         if len(lines) < 40:
             hough_done = True
@@ -46,7 +49,7 @@ def detect_lines(img_filename, th1, th2, show_canny=False):
 
     if not hough_done:
         print('********************** No hough lines found')
-        return
+        return None, None
 
     slope_list = list()
     point_list = list()
@@ -54,8 +57,6 @@ def detect_lines(img_filename, th1, th2, show_canny=False):
         rho, theta = ll[0][0], ll[0][1]
         a, b = np.cos(theta), np.sin(theta)
         x0, y0 = a*rho, b*rho
-
-        scale = src.shape[0] + src.shape[1]
 
         x1 = int(x0 + scale * -b)
         y1 = int(y0 + scale * a)
@@ -77,26 +78,47 @@ def detect_lines(img_filename, th1, th2, show_canny=False):
     sigma = np.var(slope_list)
     print(f'  -- mean({mu:.3f}), var({sigma:.5f})')
 
-    # 분산 값이 1.0보다 크면 클러스터링을 한 번 해서 구분해준다.
-    if sigma > 1.0:
-        # define dataset
-        model = KMeans(n_clusters=2)
-        slope_data = np.array(slope_list).reshape(-1, 1)
-        model.fit(slope_data)
-        yhat = model.predict(slope_data)
-        print(yhat)
-        for i in range(len(slope_list)):
-            p1 = (point_list[i][0], point_list[i][1])
-            p2 = (point_list[i][2], point_list[i][3])
-            if yhat[i] == 0:
-                cv2.line(dst, p1, p2, color=(120, 255, 120), thickness=2)
-            else:
-                cv2.line(dst, p1, p2, color=(120, 120, 255), thickness=2)
-    else:
-        for i in range(len(slope_list)):
-            p1 = (point_list[i][0], point_list[i][1])
-            p2 = (point_list[i][2], point_list[i][3])
+
+    return point_list, slope_list
+
+
+def detect_lines(img_filename, th1, th2, show_canny=False):
+    img = imread_hangul_filename(img_filename)
+    src = cv2.fastNlMeansDenoisingColored(img, None, 10, 10, 7, 21)
+    dst = src.copy()
+    gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
+
+    #canny = cv2.Canny(gray, 5000, 1500, apertureSize = 5, L2gradient = True)
+    #lines = cv2.HoughLines(canny, 0.8, np.pi / 180, 150, srn = 100, stn = 200, min_theta = 0, max_theta = np.pi)
+
+    # Canny edge detection
+    canny = cv2.Canny(gray, th1, th2)
+    if show_canny:
+        cv2.imshow("canny", canny)
+
+    scale = src.shape[0] + src.shape[1]
+    horiz_pt, horiz_sl = lines_by_hough(canny, scale, line_type=0)
+    vert1_pt, vert1_sl = lines_by_hough(canny, scale, line_type=1)
+    vert2_pt, vert2_sl = lines_by_hough(canny, scale, line_type=2)
+
+    if horiz_pt is not None:
+        print(f'  ## [{img_filename}] Num of horiz lines: ({len(horiz_pt)})')
+        for i in range(len(horiz_pt)):
+            p1 = (horiz_pt[i][0], horiz_pt[i][1])
+            p2 = (horiz_pt[i][2], horiz_pt[i][3])
             cv2.line(dst, p1, p2, color=(120, 255, 120), thickness=2)
+    if vert1_pt is not None:
+        print(f'  ## [{img_filename}] Num of vert1 lines: ({len(vert1_pt)})')
+        for i in range(len(vert1_pt)):
+            p1 = (vert1_pt[i][0], vert1_pt[i][1])
+            p2 = (vert1_pt[i][2], vert1_pt[i][3])
+            cv2.line(dst, p1, p2, color=(220, 155, 120), thickness=2)
+    if vert2_pt is not None:
+        print(f'  ## [{img_filename}] Num of vert2 lines: ({len(vert2_pt)})')
+        for i in range(len(vert2_pt)):
+            p1 = (vert2_pt[i][0], vert2_pt[i][1])
+            p2 = (vert2_pt[i][2], vert2_pt[i][3])
+            cv2.line(dst, p1, p2, color=(120, 255, 220), thickness=2)
 
     cv2.imshow("dst", dst)
     cv2.waitKey(0)
@@ -126,13 +148,15 @@ def detect_contours(img_filename):
 
 if __name__ == '__main__':
     img_file_folder = 'd:\\WORK\\LPR\\yolo_lp_corner_detect\\LP_images'
+    img_file_folder = 'd:\\WORK\\LPR\\Resnet_tf20_lpr\\original_dataset\\08_const_b'
+
     img_file_list = glob.iglob(img_file_folder + '/*.jpg*', recursive=True)
 
     i = 0
     for img_file_path in img_file_list:
         print(f'***  [{img_file_path}]')
-        detect_lines(img_file_path, 30, 100)
-#        detect_lines(img_file_path, 50, 150)
+#        detect_lines(img_file_path, 30, 150)
+        detect_lines(img_file_path, 50, 150, True)
 
 #        detect_contours(img_file_path)
 
