@@ -41,11 +41,11 @@ def lines_by_hough(canny, scale, line_type):
             lines = cv2.HoughLines(canny, 1, np.pi / 180, 90, min_theta=min_theta, max_theta=max_theta)
             if lines is None:
                 continue
-            print(f'  ## Num of lines: ({len(lines)})')
 
         if len(lines) < 40:
             hough_done = True
             break
+        print(f'  ## Num of lines: ({len(lines)})')
 
     if not hough_done:
         print('********************** No hough lines found')
@@ -79,7 +79,7 @@ def lines_by_hough(canny, scale, line_type):
     print(f'  -- mean({mu:.3f}), var({sigma:.5f})')
 
 
-    return point_list, slope_list
+    return point_list, mu
 
 
 def detect_lines(img_filename, th1, th2, show_canny=False):
@@ -106,7 +106,12 @@ def detect_lines(img_filename, th1, th2, show_canny=False):
         for i in range(len(horiz_pt)):
             p1 = (horiz_pt[i][0], horiz_pt[i][1])
             p2 = (horiz_pt[i][2], horiz_pt[i][3])
-            cv2.line(dst, p1, p2, color=(120, 255, 120), thickness=2)
+#            cv2.line(dst, p1, p2, color=(120, 255, 120), thickness=2)
+
+            y_intercept = round(p2[1] - horiz_sl * (p2[0] - 10))
+            pp = (10, y_intercept)
+            cv2.line(dst, pp, pp, color=(120, 255, 120), thickness=5)
+
     if vert1_pt is not None:
         print(f'  ## [{img_filename}] Num of vert1 lines: ({len(vert1_pt)})')
         for i in range(len(vert1_pt)):
@@ -156,9 +161,9 @@ if __name__ == '__main__':
     for img_file_path in img_file_list:
         print(f'***  [{img_file_path}]')
 #        detect_lines(img_file_path, 30, 150)
-        detect_lines(img_file_path, 50, 150, True)
+#        detect_lines(img_file_path, 50, 150, True)
 
-#        detect_contours(img_file_path)
+        detect_contours(img_file_path)
 
         i += 1
 
