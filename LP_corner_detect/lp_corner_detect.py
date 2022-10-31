@@ -3,6 +3,7 @@ import cv2
 import glob
 
 
+import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 from sklearn.cluster import KMeans
 
@@ -149,11 +150,31 @@ def detect_contours(img_filename):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+# https://machinelearningknowledge.ai/image-segmentation-in-python-opencv/
+def try_kmeans(img_filename):
+    img = imread_hangul_filename(img_filename)
+    img2 = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+
+    twoDimage = img2.reshape((-1,3))
+    twoDimage = np.float32(twoDimage)
+
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    K = 2
+    attempts=10
+
+    ret,label,center=cv2.kmeans(twoDimage,K,None,criteria,attempts,cv2.KMEANS_PP_CENTERS)
+    center = np.uint8(center)
+    res = center[label.flatten()]
+    result_image = res.reshape((img.shape))
+
+    cv2.imshow('img2', result_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
     img_file_folder = 'd:\\WORK\\LPR\\yolo_lp_corner_detect\\LP_images'
-    img_file_folder = 'd:\\WORK\\LPR\\Resnet_tf20_lpr\\original_dataset\\08_const_b'
+#    img_file_folder = 'd:\\WORK\\LPR\\Resnet_tf20_lpr\\original_dataset\\08_const_b'
 
     img_file_list = glob.iglob(img_file_folder + '/*.jpg*', recursive=True)
 
@@ -163,7 +184,9 @@ if __name__ == '__main__':
 #        detect_lines(img_file_path, 30, 150)
 #        detect_lines(img_file_path, 50, 150, True)
 
-        detect_contours(img_file_path)
+        #detect_contours(img_file_path)
+
+        try_kmeans(img_file_path)
 
         i += 1
 
