@@ -2,6 +2,7 @@
 EPOCHS = 1000
 BATCH_SIZE = 8
 NUM_CLASSES = 11
+NUM_REGRESSOR_OUTPUTS = 8
 image_width = 224
 image_height = 128
 channels = 3

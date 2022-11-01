@@ -1,10 +1,10 @@
 import tensorflow as tf
-from config import NUM_CLASSES
+from config import NUM_CLASSES, NUM_REGRESSOR_OUTPUTS
 from models.residual_block import make_basic_block_layer, make_bottleneck_layer
 
 
 class ResNetTypeI(tf.keras.Model):
-    def __init__(self, layer_params):
+    def __init__(self, layer_params, regression):
         super(ResNetTypeI, self).__init__()
 
         self.conv1 = tf.keras.layers.Conv2D(filters=64,
@@ -29,7 +29,10 @@ class ResNetTypeI(tf.keras.Model):
                                              stride=2)
 
         self.avgpool = tf.keras.layers.GlobalAveragePooling2D()
-        self.fc = tf.keras.layers.Dense(units=NUM_CLASSES, activation=tf.keras.activations.softmax)
+        if not regression:
+            self.fc = tf.keras.layers.Dense(units=NUM_CLASSES, activation=tf.keras.activations.softmax)
+        else:
+            self.fc = tf.keras.layers.Dense(units=NUM_REGRESSOR_OUTPUTS, activation=tf.keras.activations.sigmoid)
 
     def call(self, inputs, training=None, mask=None):
         x = self.conv1(inputs)
@@ -47,7 +50,7 @@ class ResNetTypeI(tf.keras.Model):
 
 
 class ResNetTypeII(tf.keras.Model):
-    def __init__(self, layer_params):
+    def __init__(self, layer_params, regression):
         super(ResNetTypeII, self).__init__()
         self.conv1 = tf.keras.layers.Conv2D(filters=64,
                                             kernel_size=(7, 7),
@@ -71,7 +74,10 @@ class ResNetTypeII(tf.keras.Model):
                                             stride=2)
 
         self.avgpool = tf.keras.layers.GlobalAveragePooling2D()
-        self.fc = tf.keras.layers.Dense(units=NUM_CLASSES, activation=tf.keras.activations.softmax)
+        if not regression:
+            self.fc = tf.keras.layers.Dense(units=NUM_CLASSES, activation=tf.keras.activations.softmax)
+        else:
+            self.fc = tf.keras.layers.Dense(units=NUM_REGRESSOR_OUTPUTS, activation=tf.keras.activations.sigmoid)
 
     def call(self, inputs, training=None, mask=None):
         x = self.conv1(inputs)
@@ -88,21 +94,21 @@ class ResNetTypeII(tf.keras.Model):
         return output
 
 
-def resnet_18():
-    return ResNetTypeI(layer_params=[2, 2, 2, 2])
+def resnet_18(regression=False):
+    return ResNetTypeI(layer_params=[2, 2, 2, 2], regression=regression)
 
 
-def resnet_34():
-    return ResNetTypeI(layer_params=[3, 4, 6, 3])
+def resnet_34(regression=False):
+    return ResNetTypeI(layer_params=[3, 4, 6, 3], regression=regression)
 
 
-def resnet_50():
-    return ResNetTypeII(layer_params=[3, 4, 6, 3])
+def resnet_50(regression=False):
+    return ResNetTypeII(layer_params=[3, 4, 6, 3], regression=regression)
 
 
-def resnet_101():
-    return ResNetTypeII(layer_params=[3, 4, 23, 3])
+def resnet_101(regression=False):
+    return ResNetTypeII(layer_params=[3, 4, 23, 3], regression=regression)
 
 
-def resnet_152():
-    return ResNetTypeII(layer_params=[3, 8, 36, 3])
+def resnet_152(regression=False):
+    return ResNetTypeII(layer_params=[3, 8, 36, 3], regression=regression)

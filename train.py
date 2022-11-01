@@ -1,24 +1,24 @@
 from __future__ import absolute_import, division, print_function
 import tensorflow as tf
 from models.resnet import resnet_18, resnet_34, resnet_50, resnet_101, resnet_152
-from prepare_data import generate_datasets
+from prepare_data import generate_datasets, generate_corner_datasets
 import math
 
 import os, sys
 import time, datetime
 import argparse
 
-def get_model(model_name, image_width, image_height, channels):
+def get_model(model_name, image_width, image_height, channels, regressor=False):
     if model_name == "resnet18":
-        model = resnet_18()
+        model = resnet_18(regressor)
     elif model_name == "resnet34":
-        model = resnet_34()
+        model = resnet_34(regressor)
     elif model_name == "resnet50":
-        model = resnet_50()
+        model = resnet_50(regressor)
     elif model_name == "resnet101":
-        model = resnet_101()
+        model = resnet_101(regressor)
     elif model_name == "resnet152":
-        model = resnet_152()
+        model = resnet_152(regressor)
     else:
         return None
 
@@ -33,6 +33,7 @@ def get_argparser():
     parser.add_argument('--width', type=int, default=224, help='image width')
     parser.add_argument('--height', type=int, default=128, help='image height')
     parser.add_argument('--model', type=str, default='resnet50', help='resnet model name')
+    parser.add_argument('--regression', type=bool, default=False, help='resnet classifier/regressor')
     parser.add_argument('--savemodel-dir', type=str, required=True, help='directory to save model')
 
     parser.add_argument('--partition-name', type=str, required=False)
@@ -53,28 +54,42 @@ if __name__ == '__main__':
             tf.config.experimental.set_memory_growth(gpu, True)
 
 
-    # get the original_dataset
-    train_dataset, valid_dataset, test_dataset, train_count, valid_count, test_count = generate_datasets(args.batch_size, args.width, args.height)
-
     # start time (checking time to take for training)
     start_t = time.time()
 
     # create model
-    model = get_model(args.model, args.width, args.height, channels=3)
+    model = get_model(args.model, args.width, args.height, channels=3, regressor=args.regression)
     if model is None:
         print(f'--model parameter is wrong: {args.model}')
         sys.exit(0)
 
 
-    # define loss and optimizer
-    loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
-    optimizer = tf.keras.optimizers.Adadelta()
+    if args.regression:
+        # get the original_dataset
+        train_dataset, valid_dataset, test_dataset, train_count, valid_count, test_count = generate_corner_datasets(args.batch_size, args.width, args.height)
 
-    train_loss = tf.keras.metrics.Mean(name='train_loss')
-    train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
+        # define loss and optimizer
+        loss_object = tf.keras.losses.MeanSquaredError()
+        optimizer = tf.keras.optimizers.Adadelta()
 
-    valid_loss = tf.keras.metrics.Mean(name='valid_loss')
-    valid_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='valid_accuracy')
+        train_loss = tf.keras.metrics.Mean(name='train_loss')
+        train_accuracy = tf.keras.metrics.MeanSquaredError(name='train_accuracy')
+
+        valid_loss = tf.keras.metrics.Mean(name='valid_loss')
+        valid_accuracy = tf.keras.metrics.MeanSquaredError(name='valid_accuracy')
+    else:
+        # get the original_dataset
+        train_dataset, valid_dataset, test_dataset, train_count, valid_count, test_count = generate_datasets(args.batch_size, args.width, args.height)
+
+        # define loss and optimizer
+        loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
+        optimizer = tf.keras.optimizers.Adadelta()
+
+        train_loss = tf.keras.metrics.Mean(name='train_loss')
+        train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
+
+        valid_loss = tf.keras.metrics.Mean(name='valid_loss')
+        valid_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='valid_accuracy')
 
     @tf.function
     def train_step(images, labels):
