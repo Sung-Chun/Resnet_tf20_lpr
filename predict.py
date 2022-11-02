@@ -41,7 +41,8 @@ if __name__ == '__main__':
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
 
-    enable_vt100()
+    if os.sep == '\\':
+        enable_vt100()
 
     # load the model
     model = get_model(args.model, args.width, args.height, channels=3, regressor=args.regression)
