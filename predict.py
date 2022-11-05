@@ -75,6 +75,8 @@ if __name__ == '__main__':
             cv2.polylines(img_obj, [true_corners], True, (100, 50, 250), 2)
             cv2.polylines(img_obj, [pred_corners], True, (100, 255, 100), 2)
 
+            # 이미지 크기를 640x480의 고정크기로 리사이즈
+            img_obj = cv2.resize(img_obj, (640, 480))
 
             cv2.imshow("plate_box", img_obj)
             cv2.waitKey(0)
