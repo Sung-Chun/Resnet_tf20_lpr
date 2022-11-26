@@ -79,6 +79,19 @@ def imread_hangul_filename(filename):
     np_arr = np.fromfile(filename, dtype=np.uint8)
     return cv2.imdecode(np_arr, cv2.IMREAD_UNCHANGED)
 
+def imwrite_hangul_filename(filename, img_obj):
+    try:
+        ext = os.path.splitext(filename)[-1]
+        result, n = cv2.imencode(ext, img_obj)
+        if not result:
+            return False
+        with open(filename, mode='w+b') as f:
+            n.tofile(f)
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
 def corner_coord(img_path):
     img_obj = imread_hangul_filename(img_path)
 
