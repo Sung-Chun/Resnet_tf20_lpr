@@ -30,6 +30,24 @@ def get_argparser():
 
     return parser
 
+def compute_iou(corners1, corners2):
+
+    x_min = np.min([corners1[:,0], corners2[:,0]])
+    x_max = np.max([corners1[:,0], corners2[:,0]])
+    y_min = np.min([corners1[:,1], corners2[:,1]])
+    y_max = np.max([corners1[:,1], corners2[:,1]])
+
+    aou, aoo = 0, 0
+    for y in range(y_min, y_max+1):
+        for x in range(x_min, x_max+1):
+            r1 = (cv2.pointPolygonTest(corners1, (x, y), False) > 0.0)
+            r2 = (cv2.pointPolygonTest(corners2, (x, y), False) > 0.0)
+            r = r1 + r2
+            if r >= 1:
+                aou += 1
+                if r == 2:  aoo += 1
+    return aoo / aou
+
 if __name__ == '__main__':
 
     # Argument parsing
@@ -89,6 +107,8 @@ if __name__ == '__main__':
         cv2.polylines(img_obj, [true_corners], True, (100, 50, 250), 2)
         cv2.polylines(img_obj, [pred_corners], True, (100, 255, 100), 2)
 
+        # IOU를 계산한다.
+        iou = compute_iou(true_corners, pred_corners)
 
         # 이미지 경로에서 LP Label을 얻어낸다.
         lp_label, lp_img_filename = all_image_path[i].split(os.sep)[2:4]
@@ -122,9 +142,9 @@ if __name__ == '__main__':
         os.makedirs(os.path.join(args.saveimage_dir, lp_label), exist_ok=True)
         save_filename = os.path.join(args.saveimage_dir, lp_label, lp_img_filename)
         if imwrite_hangul_filename(save_filename, img_obj):
-            print(f'  Completed saving image: [ \033[0;32;40m{save_filename}\033[0m ]')
+            print(f'  Completed saving image: [ \033[0;32;40m{save_filename}\033[0m ], iou={iou:.2f}')
         else:
-            print(f'  Failed in saving image: [ \033[0;31;40m{save_filename}\033[0m ]')
+            print(f'  Failed in saving image: [ \033[0;31;40m{save_filename}\033[0m ], iou={iou:.2f}')
 
         i += 1
 
