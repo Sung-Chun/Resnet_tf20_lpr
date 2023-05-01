@@ -1,7 +1,5 @@
 @echo off
 
-python train.py -E=10000 --width=224 --height=128 --model=resnet50 --savemodel-dir=resnet50_w224_h128
-python train.py -E=10000 --width=224 --height=128 --model=resnet101 --savemodel-dir=resnet101_w224_h128
-python train.py -E=10000 --width=224 --height=128 --model=resnet152 --savemodel-dir=resnet152_w224_h128
+python train.py -E=200 --width=130 --height=65 --model=resnet18 --savemodel-dir=resnet18_w130_65
 
 echo %date%, %time%

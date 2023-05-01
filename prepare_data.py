@@ -6,13 +6,13 @@ from config import image_height, image_width, channels
 import os
 import json
 
-def load_and_preprocess_image(img_path):
+def load_and_preprocess_image(img_path, img_width, img_height, num_channels):
     # read pictures
     img_raw = tf.io.read_file(img_path)
     # decode pictures
-    img_tensor = tf.image.decode_jpeg(img_raw, channels=channels)
+    img_tensor = tf.image.decode_jpeg(img_raw, channels=num_channels)
     # resize
-    img_tensor = tf.image.resize(img_tensor, [image_height, image_width])
+    img_tensor = tf.image.resize(img_tensor, [img_height, img_width])
     img_tensor = tf.cast(img_tensor, tf.float32)
     # normalization
     img = img_tensor / 255.0
@@ -41,7 +41,7 @@ def get_dataset(dataset_root_dir, img_width, img_height):
     # print("image_path: {}".format(all_image_path[:]))
     # print("image_label: {}".format(all_image_label[:]))
     # load the dataset and preprocess images
-    image_dataset = tf.data.Dataset.from_tensor_slices(all_image_path).map(load_and_preprocess_image)
+    image_dataset = tf.data.Dataset.from_tensor_slices(all_image_path).map(lambda x: load_and_preprocess_image(x, img_width, img_height, 1))
     label_dataset = tf.data.Dataset.from_tensor_slices(all_image_label)
     dataset = tf.data.Dataset.zip((image_dataset, label_dataset))
     image_count = len(all_image_path)

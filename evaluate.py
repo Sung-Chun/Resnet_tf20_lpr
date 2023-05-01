@@ -32,7 +32,7 @@ if __name__ == '__main__':
     train_dataset, valid_dataset, test_dataset, train_count, valid_count, test_count = generate_datasets(args.batch_size, args.width, args.height)
     # print(train_dataset)
     # load the model
-    model = get_model(args.model, args.width, args.height, channels=3)
+    model = get_model(args.model, args.width, args.height, channels=1)
     savemodel_filepath = os.path.join(args.savemodel_dir, 'final', 'model')
     model.load_weights(filepath=savemodel_filepath)
 

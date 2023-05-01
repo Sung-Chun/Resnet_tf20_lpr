@@ -58,7 +58,7 @@ if __name__ == '__main__':
     start_t = time.time()
 
     # create model
-    model = get_model(args.model, args.width, args.height, channels=3, regressor=args.regression)
+    model = get_model(args.model, args.width, args.height, channels=1, regressor=args.regression)
     if model is None:
         print(f'--model parameter is wrong: {args.model}')
         sys.exit(0)
